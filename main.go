@@ -104,17 +104,47 @@ func printEvents(re *regexp.Regexp) {
 					user2 := reMatch[5]
 					server2 := reMatch[6]
 					process := reMatch[7]
-					tokenName := reMatch[8]
-					tokenLevel := reMatch[9]
+					//tokenName := reMatch[8]
+					//tokenLevel := reMatch[9]
 					creatorProcess := reMatch[10]
 					if strings.Contains(user1, "$") {
 						continue
 					}
 					if strings.Contains(creatorProcess, "0x") {
-						preUniqResult = append(preUniqResult, eventID+", "+server1+", "+user1+", "+user2+", "+server2+", "+process+", "+tokenName+" "+tokenLevel)
+						preUniqResult = append(preUniqResult, eventID+", "+server1+", "+user1+", "+user2+", "+server2+", "+process)
 					} else {
 						preUniqResult = append(preUniqResult, eventID+", "+server1+", "+user1+", "+user2+", "+server2+", "+process+", "+creatorProcess)
 					}
+					continue
+				}
+
+				// 5140: A network share object was accessed
+				if eventID == "5140" {
+					user := reMatch[3]
+					server := reMatch[4]
+					user2 := reMatch[5]
+					sourceIP := reMatch[6]
+					sourcePort := reMatch[7]
+					shareName := reMatch[8]
+					preUniqResult = append(preUniqResult, eventID+", "+user+", "+server+", "+user2+", "+sourceIP+", "+sourcePort+", "+shareName)
+					continue
+				}
+
+				// 7040: A new service has changed. Static system don't change details of services.
+				if eventID == "7040" {
+					system := reMatch[3]
+					info := reMatch[4]
+					preUniqResult = append(preUniqResult, eventID+", "+system+", "+info)
+					continue
+				}
+
+				// 7045: A new service is installed. Static systems don't get new services except at patch time and new installs
+				if eventID == "7045" {
+					system := reMatch[3]
+					serviceName := reMatch[4]
+					serviceLocation := reMatch[5]
+					serviceInfo := reMatch[6]
+					preUniqResult = append(preUniqResult, eventID+", "+system+", "+serviceName+", "+serviceLocation+", "+serviceInfo)
 				}
 			}
 			if err := scanner.Err(); err != nil {
@@ -143,11 +173,17 @@ func main() {
 	re4722re4725 := regexp.MustCompile(`(?m)(4722|4725).*(	Microsoft-Windows-Security-Auditing.*?\t)(.*\S).*(N/A).*(Account Name:  )(.*)(Account Domain:  ACULOCAL   Logon ID:)`)
 	re4720 := regexp.MustCompile(`(?m)(?P<eventid>4720)(\tMicrosoft-Windows-Security-Auditing.*?)Account Name:.*?(Account Name:.*)(Additional Information:.*)`)
 	re4688 := regexp.MustCompile(`(?m)(?P<one>4688)(\tMicrosoft-Windows-Security-Auditing.*?)Audit\s(?P<three>[^ \s]*).*?Account Name:\s\s(?P<four>[^ ]*)\s{3}Account Domain:\s{2}ACULOCAL.*Account Name:\s{2}(?P<five>[^ ]*)\s{3}Account Domain:\s{2}(?P<six>.*).*\s{3}Logon ID:.*New Process Name:\s(?P<seven>.*).*?\s{3}Token Elevation Type:\s(?P<eight>[^ ]*).(?P<nine>[^ ]*).*Creator Process\s\w*:\s(?P<ten>.*).*\s{3}Process`)
+	re5140 := regexp.MustCompile(`(?m)(?P<eventid>5140)(\tMicrosoft-Windows-Security-Auditing.*?).(?P<twoUser>.*?)\tN/A\sSuccess\sAudit.(?P<threeServer>.*?)\s.*?Account\sName:\s(?P<fourUser>.*?)\s{3}Account.*Source\sAddress:\s(?P<fiveSource>.*?)\s{2}.Source\sPort:\s(?P<sixPort>.*?)\s{4}.Share.*Name:\s(?P<sevenShare>.*?)\s.*$`)
+	re7040 := regexp.MustCompile(`(?m)(?P<eventid>7040)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t\t(?P<info>.*)\s`)
+	re7045 := regexp.MustCompile(`(?m)(?P<eventid>7045)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t.*Service\sName:\s{2}(.*?)Service\sFile\sName:\s{2}(.*)Service\sType:\s{2}(.*)Service\sAccount`)
 
 	printEvents(re4663)
 	printEvents(re4722re4725)
 	printEvents(re4720)
 	printEvents(re4688)
+	printEvents(re5140)
+	//printEvents(re7040)
+	//printEvents(re7045)
 
 	exec.Command("/bin/bash", "-c", "cat /home/blt15b/win-events-results | mail -s 'Windows Events' blt15b").Output()
 }
