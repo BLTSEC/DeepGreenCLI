@@ -174,8 +174,8 @@ func main() {
 	re4720 := regexp.MustCompile(`(?m)(?P<eventid>4720)(\tMicrosoft-Windows-Security-Auditing.*?)Account Name:.*?(Account Name:.*)(Additional Information:.*)`)
 	re4688 := regexp.MustCompile(`(?m)(?P<one>4688)(\tMicrosoft-Windows-Security-Auditing.*?)Audit\s(?P<three>[^ \s]*).*?Account Name:\s\s(?P<four>[^ ]*)\s{3}Account Domain:\s{2}ACULOCAL.*Account Name:\s{2}(?P<five>[^ ]*)\s{3}Account Domain:\s{2}(?P<six>.*).*\s{3}Logon ID:.*New Process Name:\s(?P<seven>.*).*?\s{3}Token Elevation Type:\s(?P<eight>[^ ]*).(?P<nine>[^ ]*).*Creator Process\s\w*:\s(?P<ten>.*).*\s{3}Process`)
 	re5140 := regexp.MustCompile(`(?m)(?P<eventid>5140)(\tMicrosoft-Windows-Security-Auditing.*?).(?P<twoUser>.*?)\tN/A\sSuccess\sAudit.(?P<threeServer>.*?)\s.*?Account\sName:\s(?P<fourUser>.*?)\s{3}Account.*Source\sAddress:\s(?P<fiveSource>.*?)\s{2}.Source\sPort:\s(?P<sixPort>.*?)\s{4}.Share.*Name:\s(?P<sevenShare>.*?)\s.*$`)
-	re7040 := regexp.MustCompile(`(?m)(?P<eventid>7040)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t\t(?P<info>.*)\s`)
-	re7045 := regexp.MustCompile(`(?m)(?P<eventid>7045)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t.*Service\sName:\s{2}(.*?)Service\sFile\sName:\s{2}(.*)Service\sType:\s{2}(.*)Service\sAccount`)
+	//re7040 := regexp.MustCompile(`(?m)(?P<eventid>7040)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t\t(?P<info>.*)\s`)
+	//re7045 := regexp.MustCompile(`(?m)(?P<eventid>7045)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t.*Service\sName:\s{2}(.*?)Service\sFile\sName:\s{2}(.*)Service\sType:\s{2}(.*)Service\sAccount`)
 
 	printEvents(re4663)
 	printEvents(re4722re4725)
