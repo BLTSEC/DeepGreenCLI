@@ -145,6 +145,23 @@ func printEvents(re *regexp.Regexp) {
 					serviceLocation := reMatch[5]
 					serviceInfo := reMatch[6]
 					preUniqResult = append(preUniqResult, eventID+", "+system+", "+serviceName+", "+serviceLocation+", "+serviceInfo)
+					continue
+				}
+
+				// 4624: An account was successfully logged on
+				if eventID == "4624" && reMatch[5] != "SYSTEM" && (reMatch[2] != "-" && reMatch[3] != "-" && !strings.Contains(reMatch[5], "$")) && reMatch[9] != "150.252.134.143"{
+					systemAccountName := reMatch[2]
+					systemDomain := reMatch[3]
+					logonType := reMatch[4]
+					userAccountName := reMatch[5]
+					userDomain := reMatch[6]
+					processName := reMatch[7]
+					workstationName := reMatch[8]
+					sourceIP := reMatch[9]
+					//sourcePort := reMatch[10]
+					logonProcess := reMatch[11]
+					authPackage := reMatch[12]
+					preUniqResult = append(preUniqResult, eventID+" :: "+logonType+", "+systemAccountName+", "+systemDomain+", "+userAccountName+", "+userDomain+", "+processName+", "+workstationName+", "+sourceIP+", "+logonProcess+", "+authPackage)
 				}
 			}
 			if err := scanner.Err(); err != nil {
@@ -176,6 +193,7 @@ func main() {
 	re5140 := regexp.MustCompile(`(?m)(?P<eventid>5140)(\tMicrosoft-Windows-Security-Auditing.*?).(?P<twoUser>.*?)\tN/A\sSuccess\sAudit.(?P<threeServer>.*?)\s.*?Account\sName:\s(?P<fourUser>.*?)\s{3}Account.*Source\sAddress:\s(?P<fiveSource>.*?)\s{2}.Source\sPort:\s(?P<sixPort>.*?)\s{4}.Share.*Name:\s(?P<sevenShare>.*?)\s.*$`)
 	//re7040 := regexp.MustCompile(`(?m)(?P<eventid>7040)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t\t(?P<info>.*)\s`)
 	//re7045 := regexp.MustCompile(`(?m)(?P<eventid>7045)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t.*Service\sName:\s{2}(.*?)Service\sFile\sName:\s{2}(.*)Service\sType:\s{2}(.*)Service\sAccount`)
+	re4624 := regexp.MustCompile(`(?m)(4624)\t.*?me:\s{2}([^ ]*).*?n:\s{2}([^ ]*).*?e:\s{3}(10|2|3).*?e:\s{2}([^ ]*).*?n:\s{2}([^ ]*).*?e:\s{2}(.*?)\s{4}.*?e: ([^ ]*).*?ss:\s([^ ]*).*?t:\s{2}([^ ]*).*?ss:\s{2}([^ ]*).*?age:\s([^ ]*)`)
 
 	printEvents(re4663)
 	printEvents(re4722re4725)
@@ -184,6 +202,7 @@ func main() {
 	printEvents(re5140)
 	//printEvents(re7040)
 	//printEvents(re7045)
+	printEvents(re4624)
 
 	exec.Command("/bin/bash", "-c", "cat /home/blt15b/win-events-results | mail -s 'Windows Events' blt15b").Output()
 }
