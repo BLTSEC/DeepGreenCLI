@@ -97,24 +97,30 @@ func printEvents(re *regexp.Regexp) {
 					continue
 				}
 
+				//// 4688: A new process has been created BACKUP
+				//if eventID == "4688" {
+				//	server1 := reMatch[3]
+				//	user1 := reMatch[4]
+				//	user2 := reMatch[5]
+				//	server2 := reMatch[6]
+				//	process := reMatch[7]
+				//	//tokenName := reMatch[8]
+				//	//tokenLevel := reMatch[9]
+				//	creatorProcess := reMatch[10]
+				//	if strings.Contains(user1, "$") {
+				//		continue
+				//	}
+				//	if strings.Contains(creatorProcess, "0x") {
+				//		preUniqResult = append(preUniqResult, eventID+", "+server1+", "+user1+", "+user2+", "+server2+", "+process)
+				//	} else {
+				//		preUniqResult = append(preUniqResult, eventID+", "+server1+", "+user1+", "+user2+", "+server2+", "+process+", "+creatorProcess)
+				//	}
+				//	continue
+				//}
+
 				// 4688: A new process has been created
-				if eventID == "4688" {
-					server1 := reMatch[3]
-					user1 := reMatch[4]
-					user2 := reMatch[5]
-					server2 := reMatch[6]
-					process := reMatch[7]
-					//tokenName := reMatch[8]
-					//tokenLevel := reMatch[9]
-					creatorProcess := reMatch[10]
-					if strings.Contains(user1, "$") {
-						continue
-					}
-					if strings.Contains(creatorProcess, "0x") {
-						preUniqResult = append(preUniqResult, eventID+", "+server1+", "+user1+", "+user2+", "+server2+", "+process)
-					} else {
-						preUniqResult = append(preUniqResult, eventID+", "+server1+", "+user1+", "+user2+", "+server2+", "+process+", "+creatorProcess)
-					}
+				if eventID == "4688" && !strings.EqualFold(reMatch[6], "0x3e7") && !strings.EqualFold(reMatch[6], "0x3e5") {
+					preUniqResult = append(preUniqResult, eventID+", "+reMatch[2]+", "+reMatch[3]+", "+reMatch[4]+", "+reMatch[5]+", "+reMatch[6]+", "+reMatch[7]+", "+reMatch[8]+", "+reMatch[9]+", "+reMatch[10])
 					continue
 				}
 
@@ -162,6 +168,18 @@ func printEvents(re *regexp.Regexp) {
 					logonProcess := reMatch[11]
 					authPackage := reMatch[12]
 					preUniqResult = append(preUniqResult, eventID+" :: "+logonType+", "+systemAccountName+", "+systemDomain+", "+userAccountName+", "+userDomain+", "+processName+", "+workstationName+", "+sourceIP+", "+logonProcess+", "+authPackage)
+					continue
+				}
+
+				// 4648: A logon was attempted using explicit credentials
+				if eventID == "4648" && reMatch[12] != "150.252.134.143" && (reMatch[4] != "SYSTEM" && reMatch[5] != "NT") && !strings.EqualFold(reMatch[6], "0x3e7") && !strings.EqualFold(reMatch[6], "0x3e5") && reMatch[7] != "SophosUpdateMgr" && !strings.Contains(reMatch[11], "SWJobEngineWorker2.exe") {
+					preUniqResult = append(preUniqResult, eventID+", "+reMatch[2]+", "+reMatch[3]+", "+reMatch[4]+", "+reMatch[5]+", "+reMatch[6]+", "+reMatch[7]+", "+reMatch[8]+", "+reMatch[9]+", "+reMatch[10]+", "+reMatch[11]+", "+reMatch[12]+", "+reMatch[13])
+					continue
+				}
+
+				// 4672: Special privileges assigned to new logon
+				if eventID == "4672" {
+					preUniqResult = append(preUniqResult, eventID+", "+reMatch[2]+", "+reMatch[3]+", "+reMatch[4]+", "+reMatch[5]+", "+reMatch[6])
 				}
 			}
 			if err := scanner.Err(); err != nil {
@@ -189,11 +207,14 @@ func main() {
 	re4663 := regexp.MustCompile(`(?m)(?P<eventid>4663	Microsoft-Windows-Security-Auditing.*?).+(?P<server>Success Audit\s.*?\S+).+(?P<subject>Account Name:\s.*?\S+).+(?P<object>Object Name:\s.*\S).+(\sHandle).+(?P<process>Process Name:\s.*\S).+(\sAccess Request)`)
 	re4722re4725 := regexp.MustCompile(`(?m)(4722|4725).*(	Microsoft-Windows-Security-Auditing.*?\t)(.*\S).*(N/A).*(Account Name:  )(.*)(Account Domain:  ACULOCAL   Logon ID:)`)
 	re4720 := regexp.MustCompile(`(?m)(?P<eventid>4720)(\tMicrosoft-Windows-Security-Auditing.*?)Account Name:.*?(Account Name:.*)(Additional Information:.*)`)
-	re4688 := regexp.MustCompile(`(?m)(?P<one>4688)(\tMicrosoft-Windows-Security-Auditing.*?)Audit\s(?P<three>[^ \s]*).*?Account Name:\s\s(?P<four>[^ ]*)\s{3}Account Domain:\s{2}ACULOCAL.*Account Name:\s{2}(?P<five>[^ ]*)\s{3}Account Domain:\s{2}(?P<six>.*).*\s{3}Logon ID:.*New Process Name:\s(?P<seven>.*).*?\s{3}Token Elevation Type:\s(?P<eight>[^ ]*).(?P<nine>[^ ]*).*Creator Process\s\w*:\s(?P<ten>.*).*\s{3}Process`)
+	// BACKUP re4688 := regexp.MustCompile(`(?m)(?P<one>4688)(\tMicrosoft-Windows-Security-Auditing.*?)Audit\s(?P<three>[^ \s]*).*?Account Name:\s\s(?P<four>[^ ]*)\s{3}Account Domain:\s{2}ACULOCAL.*Account Name:\s{2}(?P<five>[^ ]*)\s{3}Account Domain:\s{2}(?P<six>.*).*\s{3}Logon ID:.*New Process Name:\s(?P<seven>.*).*?\s{3}Token Elevation Type:\s(?P<eight>[^ ]*).(?P<nine>[^ ]*).*Creator Process\s\w*:\s(?P<ten>.*).*\s{3}Process`)
+	re4688 := regexp.MustCompile(`(?m)(4688)\t.*?g\s([^ ]*)\sN.*?t\s([^ ]*)\sP.*?e:\s{2}([^ ]*).*?n:\s{2}([^ ]*).*?D:\s{2}([^ ]*).*?e:\s{2}([^ ]*)\s{3}A.*?:\s{2}([^ ]*).*?D:\s{2}([^ ]*).*?e:\s(.*?)\s{3}`)
 	re5140 := regexp.MustCompile(`(?m)(?P<eventid>5140)(\tMicrosoft-Windows-Security-Auditing.*?).(?P<twoUser>.*?)\tN/A\sSuccess\sAudit.(?P<threeServer>.*?)\s.*?Account\sName:\s(?P<fourUser>.*?)\s{3}Account.*Source\sAddress:\s(?P<fiveSource>.*?)\s{2}.Source\sPort:\s(?P<sixPort>.*?)\s{4}.Share.*Name:\s(?P<sevenShare>.*?)\s.*$`)
 	//re7040 := regexp.MustCompile(`(?m)(?P<eventid>7040)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t\t(?P<info>.*)\s`)
 	//re7045 := regexp.MustCompile(`(?m)(?P<eventid>7045)(\tService Control Manager.*?)Information\s(?P<system>.*?)\s\w*\t.*Service\sName:\s{2}(.*?)Service\sFile\sName:\s{2}(.*)Service\sType:\s{2}(.*)Service\sAccount`)
 	re4624 := regexp.MustCompile(`(?m)(4624)\t.*?me:\s{2}([^ ]*).*?n:\s{2}([^ ]*).*?e:\s{3}(10|2|3).*?e:\s{2}([^ ]*).*?n:\s{2}([^ ]*).*?e:\s{2}(.*?)\s{4}.*?e: ([^ ]*).*?ss:\s([^ ]*).*?t:\s{2}([^ ]*).*?ss:\s{2}([^ ]*).*?age:\s([^ ]*)`)
+	re4648 := regexp.MustCompile(`(?m)(4648)\t.*Auditing.*?\t([^ ]*)\sN.*?dit.*?\s([^ ]*)\sL.*?e:\s{2}([^ ]*).*?n:\s{2}([^ ]*).*?D:\s{2}([^ ]*).*?e:\s{2}([^ ]*).*?n:\s{2}([^ ]*).*?e:\s([^ ]*).*?n:\s([^ ]*).*?e:\s{2}(.*?)\s{3}N.*?ss:\s([^ ]*).*?t:\s{3}([^ ]*)`)
+	re4672 := regexp.MustCompile(`(?m)(4672)\t.*?ing\s([^ ]*)\sN.*?t\s([^ ]*)\sN.*e:\s{2}([^ ]*).*?n:\s{2}(.*?)\s{3}.*?s:\s{2}(.*?)\d`)
 
 	printEvents(re4663)
 	printEvents(re4722re4725)
@@ -203,6 +224,8 @@ func main() {
 	//printEvents(re7040)
 	//printEvents(re7045)
 	printEvents(re4624)
+	printEvents(re4648)
+	printEvents(re4672)
 
 	exec.Command("/bin/bash", "-c", "cat /home/blt15b/win-events-results | mail -s 'Windows Events' blt15b").Output()
 }
